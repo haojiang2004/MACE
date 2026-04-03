@@ -1,22 +1,3 @@
-// -*- C++ -*-
-//
-// Copyright (C) 2020-2025  MACESW developers
-//
-// This file is part of MACESW, Muonium-to-Antimuonium Conversion Experiment
-// offline software.
-//
-// MACESW is free software: you can redistribute it and/or modify it under the
-// terms of the GNU General Public License as published by the Free Software
-// Foundation, either version 3 of the License, or (at your option) any later
-// version.
-//
-// MACESW is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License along with
-// MACESW. If not, see <https://www.gnu.org/licenses/>.
-
 #include "MACE/Detector/Description/TTC.h++"
 #include "MACE/PhaseI/Detector/Description/TTC.h++"
 #include "MACE/Simulation/SD/TTCSD.h++"
@@ -29,17 +10,18 @@
 #include "G4HCofThisEvent.hh"
 #include "G4OpticalPhoton.hh"
 #include "G4ParticleDefinition.hh"
+#include "G4RotationMatrix.hh"
 #include "G4SDManager.hh"
 #include "G4Step.hh"
 #include "G4StepPoint.hh"
+#include "G4ThreeVector.hh"
+#include "G4TwoVector.hh"
 #include "G4VProcess.hh"
 #include "G4VTouchable.hh"
 
 #include "muc/algorithm"
 #include "muc/numeric"
 #include "muc/utility"
-
-#include "gsl/gsl"
 
 #include <algorithm>
 #include <cassert>
@@ -56,16 +38,16 @@ namespace MACE::inline Simulation::inline SD {
 
 TTCSD::TTCSD(const G4String& sdName, const Type type, const TTCSiPMSD* ttcSiPMSD) :
     G4VSensitiveDetector{sdName},
+    type{type},
     fTTCSiPMSD{ttcSiPMSD},
-    fType{type},
     fEnergyDepositionThreshold{},
     fSplitHit{},
     fHitsCollection{} {
     collectionName.insert(sdName + "HC");
 
-    const auto& energyThreshold{
+    const auto& EnergyThreshold{
         [](auto& ttc) {
-            Expects(ttc.ScintillationComponent1EnergyBin().size() == ttc.ScintillationComponent1().size());
+            assert(ttc.ScintillationComponent1EnergyBin().size() == ttc.ScintillationComponent1().size());
             std::vector<double> dE(ttc.ScintillationComponent1EnergyBin().size());
             muc::ranges::adjacent_difference(ttc.ScintillationComponent1EnergyBin(), dE.begin());
             std::vector<double> spectrum(ttc.ScintillationComponent1().size());
@@ -79,7 +61,7 @@ TTCSD::TTCSD(const G4String& sdName, const Type type, const TTCSiPMSD* ttcSiPMSD
 
     if (type == TTCSD::Type::MACE) {
         const auto& ttc{Detector::Description::TTC::Instance()};
-        fEnergyDepositionThreshold = energyThreshold(ttc);
+        fEnergyDepositionThreshold = EnergyThreshold(ttc);
         fSplitHit.reserve(ttc.NAlongPhi() * ttc.Width().size());
     } else {
         const auto& ttc{PhaseI::Detector::Description::TTC::Instance()};
@@ -108,7 +90,7 @@ auto TTCSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
     if (eDep < fEnergyDepositionThreshold) {
         return false;
     }
-    Expects(eDep > 0);
+    assert(eDep > 0);
 
     const auto& preStepPoint{*step.GetPreStepPoint()};
     const auto tileID{preStepPoint.GetTouchable()->GetReplicaNumber(1)};
@@ -125,7 +107,7 @@ auto TTCSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
     Get<"t">(*hit) = preStepPoint.GetGlobalTime();
     Get<"Edep">(*hit) = eDep;
     Get<"Good">(*hit) = false; // to be determined
-    Get<"ADC">(*hit) = {};     // to be determined
+    Get<"ADC">(*hit) = {}; // to be determined
     Get<"nOptPho">(*hit) = {}; // to be determined
     Get<"x">(*hit) = preStepPoint.GetPosition();
     Get<"Ek">(*hit) = preStepPoint.GetKineticEnergy();
@@ -154,13 +136,13 @@ auto TTCSD::EndOfEvent(G4HCofThisEvent*) -> void {
             muc::unreachable();
         case 1: {
             auto& hit{splitHit.front()};
-            Expects(Get<"TileID">(*hit) == tileID);
+            assert(Get<"TileID">(*hit) == tileID);
             fHitsCollection->insert(hit.release());
         } break;
         default: {
             const auto scintillationRiseTimeConstant1{Detector::Description::TTC::Instance().ScintillationRiseTimeConstant1()};
             const auto scintillationDecayTimeConstant1{Detector::Description::TTC::Instance().ScintillationDecayTimeConstant1()};
-            Expects(scintillationRiseTimeConstant1 >= 0 and scintillationDecayTimeConstant1 >= 0);
+            assert(scintillationRiseTimeConstant1 >= 0 and scintillationDecayTimeConstant1 >= 0);
             const auto triggerTimeWindow{scintillationRiseTimeConstant1 + scintillationDecayTimeConstant1};
             // sort hit by time
             muc::timsort(splitHit,
@@ -186,7 +168,7 @@ auto TTCSD::EndOfEvent(G4HCofThisEvent*) -> void {
                                                            return Get<"TrkID">(*hit1) < Get<"TrkID">(*hit2);
                                                        })};
                 // construct real hit
-                Ensures(Get<"TileID">(*topHit) == tileID);
+                assert(Get<"TileID">(*topHit) == tileID);
                 for (const auto& hit : cluster) {
                     if (hit == topHit) {
                         continue;

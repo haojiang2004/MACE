@@ -2,8 +2,7 @@
 /run/verbose 0
 
 #/MACE/Physics/UseRadioactiveDecayPhysics
-#/MACE/Physics/UseOpticalPhysics
-#/process/optical/scintillation/setFiniteRiseTime true
+/MACE/Physics/UseOpticalPhysics
 
 #/Mustard/Detector/Description/Import SimMACEPhaseI_geom.yaml
 

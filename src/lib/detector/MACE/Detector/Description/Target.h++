@@ -1,22 +1,3 @@
-// -*- C++ -*-
-//
-// Copyright (C) 2020-2025  MACESW developers
-//
-// This file is part of MACESW, Muonium-to-Antimuonium Conversion Experiment
-// offline software.
-//
-// MACESW is free software: you can redistribute it and/or modify it under the
-// terms of the GNU General Public License as published by the Free Software
-// Foundation, either version 3 of the License, or (at your option) any later
-// version.
-//
-// MACESW is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License along with
-// MACESW. If not, see <https://www.gnu.org/licenses/>.
-
 #pragma once
 
 #include "Mustard/Concept/InputVector.h++"
@@ -50,7 +31,7 @@ public:
 
 private:
     Target();
-    ~Target() override = default;
+    ~Target() = default;
 
 public:
     auto ShapeType() const -> auto { return fShapeType; }
@@ -62,14 +43,14 @@ public:
     template<typename ADerivedShape>
     class ShapeBase : public Mustard::Env::Memory::WeakSingleton<ADerivedShape> {
     protected:
-        explicit ShapeBase(ADerivedShape* derived);
+        ShapeBase(ADerivedShape* derived);
         ~ShapeBase() = default;
 
     protected:
         template<typename ADerivedDetail>
         class DetailBase : public Mustard::Env::Memory::WeakSingleton<ADerivedDetail> {
         protected:
-            explicit DetailBase(ADerivedDetail* derived);
+            DetailBase(ADerivedDetail* derived);
             ~DetailBase() = default;
         };
     };
@@ -115,7 +96,7 @@ public:
     private:
         class PerforatedCuboid final : public DetailBase<PerforatedCuboid> {
         public:
-            explicit PerforatedCuboid(gsl::not_null<const CuboidTarget*> cuboid);
+            PerforatedCuboid(gsl::not_null<const CuboidTarget*> cuboid);
 
             auto WidthExtent() const -> auto { return fWidthExtent; }
             auto HeightExtent() const -> auto { return fHeightExtent; }

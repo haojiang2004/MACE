@@ -1,22 +1,3 @@
-// -*- C++ -*-
-//
-// Copyright (C) 2020-2025  MACESW developers
-//
-// This file is part of MACESW, Muonium-to-Antimuonium Conversion Experiment
-// offline software.
-//
-// MACESW is free software: you can redistribute it and/or modify it under the
-// terms of the GNU General Public License as published by the Free Software
-// Foundation, either version 3 of the License, or (at your option) any later
-// version.
-//
-// MACESW is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License along with
-// MACESW. If not, see <https://www.gnu.org/licenses/>.
-
 #include "MACE/Data/SimHit.h++"
 #include "MACE/Detector/Description/ECAL.h++"
 #include "MACE/ReconECAL/ReconECAL.h++"
@@ -25,13 +6,13 @@
 #include "Mustard/Data/Processor.h++"
 #include "Mustard/Data/Tuple.h++"
 #include "Mustard/Env/MPIEnv.h++"
-#include "Mustard/Math/GeometryRepresentation.h++"
-#include "Mustard/Math/Vector.h++"
 #include "Mustard/Parallel/ProcessSpecificPath.h++"
 #include "Mustard/Utility/LiteralUnit.h++"
 #include "Mustard/Utility/MathConstant.h++"
 #include "Mustard/Utility/PhysicalConstant.h++"
 #include "Mustard/Utility/VectorArithmeticOperator.h++"
+
+#include "CLHEP/Vector/ThreeVector.h"
 
 #include "ROOT/RDataFrame.hxx"
 #include "TFile.h"
@@ -56,11 +37,11 @@ using namespace Mustard::LiteralUnit::Time;
 using namespace Mustard::MathConstant;
 using namespace Mustard::PhysicalConstant;
 
-auto Smear(float e) -> float {
+auto smear(float e) -> float {
     e *= 1000;
     constexpr auto a = -7.47073293;
     constexpr auto b = 2.76377561;
-    auto fwhm = a + b * std::sqrt(e);
+    auto fwhm = a + b * sqrt(e);
     auto smearedEnergy = gRandom->Gaus(e, fwhm / 2.35482);
     return smearedEnergy / 1000;
 }
@@ -77,11 +58,12 @@ auto ReconECAL::Main(int argc, char* argv[]) const -> int {
     }
 
     const auto& ecal{Detector::Description::ECAL::Instance()};
-    const auto& faceList{ecal.Mesh().faceList};
+    const auto& faceList{ecal.Mesh().fFaceList};
+    const auto& clusterMap{ecal.Mesh().fClusterMap};
 
-    std::map<int, Mustard::Point3D> centroidMap;
+    std::map<int, CLHEP::Hep3Vector> centroidMap;
 
-    for (int i{}; auto&& [centroid, _1, _2, _3, _4] : std::as_const(faceList)) {
+    for (int i{}; auto&& [centroid, _1, _2] : std::as_const(faceList)) {
         centroidMap[i] = centroid;
         i++;
     }
@@ -127,13 +109,13 @@ auto ReconECAL::Main(int argc, char* argv[]) const -> int {
             auto firstSeedModule = potentialSeedModule.begin();
             auto secondSeedModule = std::ranges::next(potentialSeedModule.begin());
 
-            const auto clustering = [&](std::unordered_set<short>& set, std::vector<short>::iterator it) {
+            const auto Clustering = [&](std::unordered_set<short>& set, std::vector<short>::iterator it) {
                 set.insert(*it); // add seed module
-                for (auto&& m : faceList[*it].neighborModuleID) {
+                for (auto&& m : clusterMap.at(*it)) {
                     set.insert(m); // add 1st layer
-                    for (auto&& n : faceList[m].neighborModuleID) {
-                        set.insert(n);                                                                        // add 2nd layer
-                        set.insert(faceList[n].neighborModuleID.begin(), faceList[n].neighborModuleID.end()); // add 3rd layer
+                    for (auto&& n : clusterMap.at(m)) {
+                        set.insert(n);                                                // add 2nd layer
+                        set.insert(clusterMap.at(n).begin(), clusterMap.at(n).end()); // add 3rd layer
                     }
                 }
 
@@ -142,13 +124,13 @@ auto ReconECAL::Main(int argc, char* argv[]) const -> int {
                     if (not hitDict.contains(m) or Get<"Edep">(*hitDict.at(m)) < 50_keV) {
                         continue;
                     }
-                    energy += Smear(Get<"Edep">(*hitDict.at(m)));
+                    energy += smear(Get<"Edep">(*hitDict.at(m)));
                 }
                 return energy;
             };
 
-            auto firstClusterEnergy = clustering(firstCluster, firstSeedModule);
-            auto secondClusterEnergy = clustering(secondCluster, secondSeedModule);
+            auto firstClusterEnergy = Clustering(firstCluster, firstSeedModule);
+            auto secondClusterEnergy = Clustering(secondCluster, secondSeedModule);
 
             if (firstClusterEnergy > 590_keV or secondClusterEnergy > 590_keV) {
                 return;

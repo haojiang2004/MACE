@@ -1,4 +1,3 @@
-.clang-tidy
 **/.cache/
 **/.ipynb_checkpoints/
 **/.temp/
@@ -17,8 +16,7 @@
 **/*.root
 **/*.so*
 **/*.swp
-**/*.tar
-**/build*/
+**/build/
 **/GPATH
 **/GRTAGS
 **/GTAGS
@@ -32,6 +30,4 @@ document/doxygen/man/
 document/doxygen/rtf/
 document/doxygen/xml/
 install/
-src/lib/utility/MACE/Version.inl
 thirdparty/
-tooling/clang-tidy-fix-*.yml

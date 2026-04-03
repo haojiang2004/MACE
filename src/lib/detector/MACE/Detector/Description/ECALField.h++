@@ -1,22 +1,3 @@
-// -*- C++ -*-
-//
-// Copyright (C) 2020-2025  MACESW developers
-//
-// This file is part of MACESW, Muonium-to-Antimuonium Conversion Experiment
-// offline software.
-//
-// MACESW is free software: you can redistribute it and/or modify it under the
-// terms of the GNU General Public License as published by the Free Software
-// Foundation, either version 3 of the License, or (at your option) any later
-// version.
-//
-// MACESW is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License along with
-// MACESW. If not, see <https://www.gnu.org/licenses/>.
-
 #pragma once
 
 #include "Mustard/Detector/Description/DescriptionBase.h++"
@@ -32,7 +13,7 @@ class ECALField final : public Mustard::Detector::Description::DescriptionBase<E
 
 private:
     ECALField();
-    ~ECALField() override = default;
+    ~ECALField() = default;
 
 public:
     ///////////////////////////////////////////////////////////
@@ -51,9 +32,9 @@ public:
     // Field
     ///////////////////////////////////////////////////////////
 
-    auto NominalField() const -> auto { return fNominalField; }
+    auto FastField() const -> auto { return fFastField; }
 
-    auto NominalField(double val) -> void { fNominalField = val; }
+    auto FastField(double val) -> void { fFastField = val; }
 
 private:
     auto ImportAllValue(const YAML::Node& node) -> void override;
@@ -71,7 +52,7 @@ private:
     // Field
     ///////////////////////////////////////////////////////////
 
-    double fNominalField;
+    double fFastField;
 };
 
 } // namespace MACE::Detector::Description

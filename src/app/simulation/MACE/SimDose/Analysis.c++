@@ -1,22 +1,3 @@
-// -*- C++ -*-
-//
-// Copyright (C) 2020-2025  MACESW developers
-//
-// This file is part of MACESW, Muonium-to-Antimuonium Conversion Experiment
-// offline software.
-//
-// MACESW is free software: you can redistribute it and/or modify it under the
-// terms of the GNU General Public License as published by the Free Software
-// Foundation, either version 3 of the License, or (at your option) any later
-// version.
-//
-// MACESW is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License along with
-// MACESW. If not, see <https://www.gnu.org/licenses/>.
-
 #include "MACE/SimDose/Action/DetectorConstruction.h++"
 #include "MACE/SimDose/Analysis.h++"
 
@@ -137,7 +118,7 @@ auto Analysis::FillMap(const G4Step& step) const -> void {
     const auto x0{pre.GetPosition()};
     const auto x{post.GetPosition()};
     for (auto&& [eDepMap, doseMap, deltaV, minDelta] : std::as_const(fMap)) {
-        const auto fill{
+        const auto Fill{
             [&](G4ThreeVector x, double eDep, double dose) {
                 eDepMap->Fill(x.x(), x.y(), x.z(), eDep / joule);
                 doseMap->Fill(x.x(), x.y(), x.z(), dose / gray);
@@ -145,7 +126,7 @@ auto Analysis::FillMap(const G4Step& step) const -> void {
         if (status != fAlongStepDoItProc) {
             const auto deltaM{post.GetMaterial()->GetDensity() * deltaV};
             const auto dose{eDep / deltaM};
-            fill(x, eDep, dose);
+            Fill(x, eDep, dose);
         } else {
             const auto deltaM{pre.GetMaterial()->GetDensity() * deltaV};
             const auto dose{eDep / deltaM};
@@ -159,7 +140,7 @@ auto Analysis::FillMap(const G4Step& step) const -> void {
 
             auto xFill{x0 + deltaFill / 2};
             for (int i{}; i < nFill; ++i) {
-                fill(xFill, eDepFill, doseFill);
+                Fill(xFill, eDepFill, doseFill);
                 xFill += deltaFill;
             }
         }
@@ -216,7 +197,7 @@ auto Analysis::RunBeginUserAction(int) -> void {
 
 auto Analysis::RunEndUserAction(int runID) -> void {
     gDirectory->mkdir(fmt::format("G4Run{}", runID).c_str(), "", true)->cd();
-    for (auto&& [eDepMap, doseMap, _1, _2] : std::as_const(fMap)) {
+    for (auto&& [eDepMap, doseMap, _, __] : std::as_const(fMap)) {
         eDepMap->Write();
         doseMap->Write();
     }

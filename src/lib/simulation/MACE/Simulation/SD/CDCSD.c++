@@ -1,22 +1,4 @@
-// -*- C++ -*-
-//
-// Copyright (C) 2020-2025  MACESW developers
-//
-// This file is part of MACESW, Muonium-to-Antimuonium Conversion Experiment
-// offline software.
-//
-// MACESW is free software: you can redistribute it and/or modify it under the
-// terms of the GNU General Public License as published by the Free Software
-// Foundation, either version 3 of the License, or (at your option) any later
-// version.
-//
-// MACESW is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License along with
-// MACESW. If not, see <https://www.gnu.org/licenses/>.
-
+#include "MACE/Detector/Description/MMSField.h++"
 #include "MACE/Simulation/SD/CDCSD.h++"
 
 #include "Mustard/IO/PrettyLog.h++"
@@ -34,13 +16,13 @@
 #include "G4ThreeVector.hh"
 #include "G4TwoVector.hh"
 #include "G4VProcess.hh"
+#include "G4VTouchable.hh"
 
 #include "muc/algorithm"
 #include "muc/numeric"
 #include "muc/utility"
 
-#include "gsl/gsl"
-
+#include <cassert>
 #include <cmath>
 #include <ranges>
 #include <string_view>
@@ -79,8 +61,8 @@ auto CDCSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
     const auto& step{*theStep};
     const auto eDep{step.GetTotalEnergyDeposit()};
 
-    Expects(0 <= step.GetNonIonizingEnergyDeposit());
-    Expects(step.GetNonIonizingEnergyDeposit() <= eDep);
+    assert(0 <= step.GetNonIonizingEnergyDeposit());
+    assert(step.GetNonIonizingEnergyDeposit() <= eDep);
     if (eDep - step.GetNonIonizingEnergyDeposit() < fIonizingEnergyDepositionThreshold) {
         return false;
     }
@@ -94,11 +76,11 @@ auto CDCSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
     // retrieve wire position
     const auto cellID{touchable.GetReplicaNumber(1)};
     const auto& cellInfo{fCellMap->at(cellID)};
-    Ensures(cellID == cellInfo.cellID);
+    assert(cellID == cellInfo.cellID);
     const auto xWire{Mustard::VectorCast<G4TwoVector>(cellInfo.position)};
     const auto tWire{Mustard::VectorCast<G4ThreeVector>(cellInfo.direction)};
     // calculate drift distance
-    double driftDistance{};
+    double driftDistance;
     if (const auto pHat{muc::midpoint(preStepPoint.GetMomentumDirection(), postStepPoint.GetMomentumDirection())};
         not pHat.isParallel(tWire)) {
         const auto n{tWire.cross(pHat)};
@@ -154,12 +136,12 @@ auto CDCSD::EndOfEvent(G4HCofThisEvent*) -> void {
             muc::unreachable();
         case 1: {
             auto& hit{splitHit.front()};
-            Ensures(Get<"CellID">(*hit) == cellID);
+            assert(Get<"CellID">(*hit) == cellID);
             fHitsCollection->insert(hit.release());
         } break;
         default: {
             const auto timeResolutionFWHM{Detector::Description::CDC::Instance().TimeResolutionFWHM()};
-            Expects(timeResolutionFWHM >= 0);
+            assert(timeResolutionFWHM >= 0);
             // sort hit by signal time
             muc::timsort(splitHit,
                          [](const auto& hit1, const auto& hit2) {
@@ -184,7 +166,7 @@ auto CDCSD::EndOfEvent(G4HCofThisEvent*) -> void {
                                                            return Get<"TrkID">(*hit1) < Get<"TrkID">(*hit2);
                                                        })};
                 // construct real hit
-                Ensures(Get<"CellID">(*topHit) == cellID);
+                assert(Get<"CellID">(*topHit) == cellID);
                 auto nTopHit{1};
                 for (const auto& hit : cluster) {
                     if (hit == topHit) {

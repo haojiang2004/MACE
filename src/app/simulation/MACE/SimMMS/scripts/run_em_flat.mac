@@ -7,10 +7,11 @@
 
 #/Mustard/Detector/Description/Ixport mms_geom.yaml
 
-#/MACE/Physics/UseOpticalPhysics
+/MACE/Physics/UseOpticalPhysics
 
 /run/initialize
-#/process/optical/scintillation/setFiniteRiseTime true
+
+/process/optical/scintillation/setFiniteRiseTime true
 
 /MACE/Generator/SwitchToGPSX
 /gps/particle                         e-
@@ -31,10 +32,7 @@
 # Run
 #############################################################################
 
-/Mustard/Analysis/FilePath SimMMS_em_flat_test.root
+/Mustard/Analysis/FilePath SimMMS_em_flat.root
 /Mustard/Analysis/FileMode NEW
-#/run/beamOn 10000
-
-/run/beamOn 3000
-
+/run/beamOn 10000
 /Mustard/Run/PrintRunSummary

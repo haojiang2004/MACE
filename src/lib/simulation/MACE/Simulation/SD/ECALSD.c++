@@ -1,22 +1,3 @@
-// -*- C++ -*-
-//
-// Copyright (C) 2020-2025  MACESW developers
-//
-// This file is part of MACESW, Muonium-to-Antimuonium Conversion Experiment
-// offline software.
-//
-// MACESW is free software: you can redistribute it and/or modify it under the
-// terms of the GNU General Public License as published by the Free Software
-// Foundation, either version 3 of the License, or (at your option) any later
-// version.
-//
-// MACESW is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License along with
-// MACESW. If not, see <https://www.gnu.org/licenses/>.
-
 #include "MACE/Detector/Description/ECAL.h++"
 #include "MACE/Simulation/SD/ECALPMSD.h++"
 #include "MACE/Simulation/SD/ECALSD.h++"
@@ -28,15 +9,17 @@
 #include "G4HCofThisEvent.hh"
 #include "G4OpticalPhoton.hh"
 #include "G4ParticleDefinition.hh"
+#include "G4RotationMatrix.hh"
 #include "G4SDManager.hh"
 #include "G4Step.hh"
 #include "G4StepPoint.hh"
+#include "G4ThreeVector.hh"
+#include "G4TwoVector.hh"
 #include "G4VProcess.hh"
+#include "G4VTouchable.hh"
 
 #include "muc/algorithm"
 #include "muc/numeric"
-
-#include "gsl/gsl"
 
 #include <algorithm>
 #include <cassert>
@@ -61,7 +44,7 @@ ECALSD::ECALSD(const G4String& sdName, const ECALPMSD* ecalPMSD) :
     collectionName.insert(sdName + "HC");
 
     const auto& ecal{Detector::Description::ECAL::Instance()};
-    Expects(ecal.ScintillationEnergyBin().size() == ecal.ScintillationComponent1().size());
+    assert(ecal.ScintillationEnergyBin().size() == ecal.ScintillationComponent1().size());
     std::vector<double> dE(ecal.ScintillationEnergyBin().size());
     muc::ranges::adjacent_difference(ecal.ScintillationEnergyBin(), dE.begin());
     std::vector<double> spectrum(ecal.ScintillationComponent1().size());
@@ -91,10 +74,11 @@ auto ECALSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
     }
 
     const auto eDep{step.GetTotalEnergyDeposit()};
+
     if (eDep < fEnergyDepositionThreshold) {
         return false;
     }
-    Expects(eDep > 0);
+    assert(eDep > 0);
 
     const auto& preStepPoint{*step.GetPreStepPoint()};
     const auto& touchable{*preStepPoint.GetTouchable()};
@@ -139,12 +123,12 @@ auto ECALSD::EndOfEvent(G4HCofThisEvent*) -> void {
             muc::unreachable();
         case 1: {
             auto& hit{splitHit.front()};
-            Ensures(Get<"ModID">(*hit) == modID);
+            assert(Get<"ModID">(*hit) == modID);
             fHitsCollection->insert(hit.release());
         } break;
         default: {
             const auto scintillationTimeConstant1{Detector::Description::ECAL::Instance().ScintillationTimeConstant1()};
-            Expects(scintillationTimeConstant1 >= 0);
+            assert(scintillationTimeConstant1 >= 0);
             // sort hit by time
             muc::timsort(splitHit,
                          [](const auto& hit1, const auto& hit2) {
@@ -169,7 +153,7 @@ auto ECALSD::EndOfEvent(G4HCofThisEvent*) -> void {
                                                            return Get<"TrkID">(*hit1) < Get<"TrkID">(*hit2);
                                                        })};
                 // construct real hit
-                Ensures(Get<"ModID">(*topHit) == modID);
+                assert(Get<"ModID">(*topHit) == modID);
                 for (const auto& hit : cluster) {
                     if (hit == topHit) {
                         continue;

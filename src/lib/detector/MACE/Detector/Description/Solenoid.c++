@@ -1,22 +1,3 @@
-// -*- C++ -*-
-//
-// Copyright (C) 2020-2025  MACESW developers
-//
-// This file is part of MACESW, Muonium-to-Antimuonium Conversion Experiment
-// offline software.
-//
-// MACESW is free software: you can redistribute it and/or modify it under the
-// terms of the GNU General Public License as published by the Free Software
-// Foundation, either version 3 of the License, or (at your option) any later
-// version.
-//
-// MACESW is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License along with
-// MACESW. If not, see <https://www.gnu.org/licenses/>.
-
 #include "MACE/Detector/Description/Solenoid.h++"
 
 #include "Mustard/Utility/LiteralUnit.h++"
@@ -44,7 +25,7 @@ Solenoid::Solenoid() :
     // Material
     fMaterialName{"G4_Cu"},
     // Field
-    fNominalField{100_mT} {}
+    fFastField{100_mT} {}
 
 auto Solenoid::ImportAllValue(const YAML::Node& node) -> void {
     // Geometry
@@ -61,7 +42,7 @@ auto Solenoid::ImportAllValue(const YAML::Node& node) -> void {
     // Material
     ImportValue(node, fMaterialName, "MaterialName");
     // Field
-    ImportValue(node, fNominalField, "NominalField");
+    ImportValue(node, fFastField, "FastField");
 }
 
 auto Solenoid::ExportAllValue(YAML::Node& node) const -> void {
@@ -79,7 +60,7 @@ auto Solenoid::ExportAllValue(YAML::Node& node) const -> void {
     // Material
     ExportValue(node, fMaterialName, "MaterialName");
     // Field
-    ExportValue(node, fNominalField, "NominalField");
+    ExportValue(node, fFastField, "FastField");
 }
 
 } // namespace MACE::Detector::Description

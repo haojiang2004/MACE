@@ -6,9 +6,7 @@
 #/control/saveHistory
 /run/verbose 2
 
-#/Mustard/Detector/Description/Export SimMACE.yaml
-#/Mustard/Detector/Description/Import SimMACE.yaml
-#/Mustard/Detector/Description/Ixport SimMACE.yaml
+#/Mustard/Detector/Description/Ixport SimMACE_geom.yaml
 
 /run/initialize
 
@@ -182,4 +180,3 @@
 
 /vis/verbose warnings
 /vis/viewer/set/autoRefresh yes
-

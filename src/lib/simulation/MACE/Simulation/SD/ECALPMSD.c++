@@ -1,22 +1,3 @@
-// -*- C++ -*-
-//
-// Copyright (C) 2020-2025  MACESW developers
-//
-// This file is part of MACESW, Muonium-to-Antimuonium Conversion Experiment
-// offline software.
-//
-// MACESW is free software: you can redistribute it and/or modify it under the
-// terms of the GNU General Public License as published by the Free Software
-// Foundation, either version 3 of the License, or (at your option) any later
-// version.
-//
-// MACESW is distributed in the hope that it will be useful, but WITHOUT ANY
-// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-// A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License along with
-// MACESW. If not, see <https://www.gnu.org/licenses/>.
-
 #include "MACE/Detector/Description/ECAL.h++"
 #include "MACE/Simulation/SD/ECALPMSD.h++"
 
@@ -31,8 +12,6 @@
 #include "G4VTouchable.hh"
 
 #include "muc/algorithm"
-
-#include "gsl/gsl"
 
 #include <cassert>
 
@@ -78,7 +57,7 @@ auto ECALPMSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
 
 auto ECALPMSD::EndOfEvent(G4HCofThisEvent*) -> void {
     const auto integralTime{Detector::Description::ECAL::Instance().WaveformIntegralTime()};
-    Expects(integralTime >= 0);
+    assert(integralTime >= 0);
 
     for (int hitID{};
          auto&& [modID, hitOfUnit] : fHit) {
@@ -94,7 +73,7 @@ auto ECALPMSD::EndOfEvent(G4HCofThisEvent*) -> void {
                 break;
             }
             Get<"HitID">(*hit) = hitID++;
-            Ensures(Get<"ModID">(*hit) == modID);
+            assert(Get<"ModID">(*hit) == modID);
             fHitsCollection->insert(hit.release());
         }
     }
@@ -103,7 +82,7 @@ auto ECALPMSD::EndOfEvent(G4HCofThisEvent*) -> void {
 auto ECALPMSD::NOpticalPhotonHit() const -> muc::flat_hash_map<int, int> {
     muc::flat_hash_map<int, int> nHit;
     for (auto&& [modID, hit] : fHit) {
-        if (not hit.empty()) {
+        if (hit.size() > 0) {
             nHit[modID] = hit.size();
         }
     }
